@@ -1,0 +1,56 @@
+# Node.js with Vue
+# Build a Node.js project that uses Vue.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+- development
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '18.x'
+  displayName: 'Install Node.js'
+
+- script: |
+- task: Npm@1
+  inputs:
+    command: 'install'
+    workingDir: 'UECP'
+  displayName: 'npm install for NodeJS'
+- task: Npm@1
+  inputs:
+    command: 'install'
+    workingDir: 'UECP/client'
+  displayName: 'npm install for VueJS'
+- task: Npm@1
+  inputs:
+    command: 'custom'
+    workingDir: 'UECP/client'
+    customCommand: 'run build'
+  displayName: 'npm run build for VueJS'
+  env: 
+    VUE_APP_IMAGE_CONTAINER: $(VUE_APP_IMAGE_CONTAINER)
+    VUE_APP_PROFILES_IMAGE_CONTAINER: $(VUE_APP_PROFILES_IMAGE_CONTAINER)
+- task: Npm@1
+  inputs:
+    command: 'custom'
+    workingDir: 'UECP'
+    customCommand: 'run test-CI'
+  displayName: 'npm run test-CI'
+  env:
+    DB_SRV: $(DB_SRV)
+    AZURE_STORAGE_ACCOUNT_NAME: $(AZURE_STORAGE_ACCOUNT_NAME)
+    AZURE_STORAGE_ACCOUNT_ACCESS_KEY: $(AZURE_STORAGE_ACCOUNT_ACCESS_KEY)
+    SECRET: $(SECRET)
+    DEV_MODE: $(DEV_MODE)
+    SERVICE_URL: $(SERVICE_URL)
+    SHIP_ENGINE_API: $(SHIP_ENGINE_API)
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '$(System.DefaultWorkingDirectory)/UECP/server/test/junit.xml'
